@@ -257,9 +257,24 @@ async function runDemo() {
       createFilePart(imageContent)
     ]);
     
-    const imageTask = await client.sendTask(imageMessage, null, true, 10000);
-    console.log('Task completed!');
-    console.log('Processing results:', JSON.stringify(imageTask.artifacts[1].parts[0].data, null, 2));
+    try {
+      const imageTask = await client.sendTask(imageMessage, null, true, 10000);
+      console.log('Task completed!');
+      
+      // Check if task completed successfully and has artifacts
+      if (imageTask.status.state === 'completed' && imageTask.artifacts && imageTask.artifacts.length > 1) {
+        const processingResults = imageTask.artifacts[1].parts[0].data;
+        console.log('Processing results:', JSON.stringify(processingResults, null, 2));
+      } else {
+        console.log('Image processing task completed but with issues');
+        console.log('Status:', imageTask.status.state);
+        if (imageTask.status.message?.parts?.[0]?.text) {
+          console.log('Message:', imageTask.status.message.parts[0].text);
+        }
+      }
+    } catch (error) {
+      console.log('Image processing failed (expected with mock data):', error.message);
+    }
     console.log();
     
     // Example 4: Task orchestration with user input

@@ -41,7 +41,7 @@ const skills = {
       
       try {
         // Use real LLM analysis - pass undefined instead of null to use default provider
-        const analysis = await llmService.analyzeText(textToAnalyze, provider || undefined);
+        const analysis = await llmService.analyzeText(textToAnalyze, provider === null ? undefined : provider);
         
         // Create response message
         const responseParts = [
@@ -109,56 +109,89 @@ const skills = {
           const prompt = `Analyze this image and ${processingInstructions || 'describe what you see'}. 
           Provide a detailed description and any relevant information.`;
           
-          const result = await llmService.processImage(base64Image, prompt, provider || 'openai');
-          
-          // Generate mock processing results (for demo purposes)
-          const processingResults = {
-            originalDimensions: { width: 800, height: 600 },
-            processedDimensions: { width: 400, height: 300 },
-            description: result.text,
-            provider: result.provider,
-            model: result.model,
-            processingTime: '2.1 seconds'
-          };
-          
-          // Create processed image (mock)
-          const processedImageContent = createFileContent(
-            'processed-image.png',
-            'image/png',
-            Buffer.from('mock-processed-image-data')
-          );
-          
-          // Create response message
-          const responseParts = [
-            createTextPart(`Image processing completed using ${result.provider}!`),
-            createDataPart(processingResults, { mimeType: 'application/json' }),
-            createFilePart(processedImageContent, { note: 'Processed image' })
-          ];
-          
-          // Create artifacts
-          const artifacts = [
-            createArtifact(
+          try {
+            const result = await llmService.processImage(base64Image, prompt, provider === null ? 'openai' : (provider || 'openai'));
+            
+            // Generate mock processing results (for demo purposes)
+            const processingResults = {
+              originalDimensions: { width: 800, height: 600 },
+              processedDimensions: { width: 400, height: 300 },
+              description: result.text,
+              provider: result.provider,
+              model: result.model,
+              processingTime: '2.1 seconds'
+            };
+            
+            // Create processed image (mock)
+            const processedImageContent = createFileContent(
               'processed-image.png',
-              [createFilePart(processedImageContent)],
-              'Processed version of the input image'
-            ),
-            createArtifact(
-              'processing-results.json',
-              [createDataPart(processingResults, { mimeType: 'application/json' })],
-              `Detailed image processing results from ${result.provider}`
-            )
-          ];
-          
-          return {
-            message: createMessage('agent', responseParts),
-            artifacts
-          };
+              'image/png',
+              Buffer.from('mock-processed-image-data')
+            );
+            
+            // Create response message
+            const responseParts = [
+              createTextPart(`Image processing completed using ${result.provider}!`),
+              createDataPart(processingResults, { mimeType: 'application/json' }),
+              createFilePart(processedImageContent, { note: 'Processed image' })
+            ];
+            
+            // Create artifacts
+            const artifacts = [
+              createArtifact(
+                'processed-image.png',
+                [createFilePart(processedImageContent)],
+                'Processed version of the input image'
+              ),
+              createArtifact(
+                'processing-results.json',
+                [createDataPart(processingResults, { mimeType: 'application/json' })],
+                `Detailed image processing results from ${result.provider}`
+              )
+            ];
+            
+            return {
+              message: createMessage('agent', responseParts),
+              artifacts
+            };
+          } catch (imageProcessingError) {
+            console.error('Error processing image with LLM:', imageProcessingError);
+            
+            // Return error response
+            const errorParts = [
+              createTextPart(`Image processing failed: ${imageProcessingError.message || 'Unknown error occurred'}`),
+              createDataPart({
+                error: true,
+                errorMessage: imageProcessingError.message || 'Unknown error',
+                errorCode: imageProcessingError.code || 'PROCESSING_ERROR'
+              }, { mimeType: 'application/json' })
+            ];
+            
+            return {
+              message: createMessage('agent', errorParts),
+              artifacts: []
+            };
+          }
         } else {
           throw new Error('Image processing from URI not implemented yet');
         }
       } catch (error) {
         console.error('Error in image processing:', error);
-        throw error;
+        
+        // Ensure we always return a proper structure even on error
+        const errorParts = [
+          createTextPart(`Image processing failed: ${error.message || 'Unknown error occurred'}`),
+          createDataPart({
+            error: true,
+            errorMessage: error.message || 'Unknown error',
+            errorCode: error.code || 'PROCESSING_ERROR'
+          }, { mimeType: 'application/json' })
+        ];
+        
+        return {
+          message: createMessage('agent', errorParts),
+          artifacts: []
+        };
       }
     }
   },
@@ -195,7 +228,7 @@ const skills = {
       
       try {
         // Use real LLM for data transformation - pass undefined instead of null to use default
-        const transformedData = await llmService.transformData(inputData, targetFormat, provider || undefined);
+        const transformedData = await llmService.transformData(inputData, targetFormat, provider === null ? undefined : provider);
         
         let outputMimeType;
         let outputFileName;
@@ -218,12 +251,12 @@ const skills = {
         
         // Create response message
         const responseParts = [
-          createTextPart(`Data transformation completed! Converted to ${targetFormat} using ${provider || llmService.defaultProvider}.`),
+          createTextPart(`Data transformation completed! Converted to ${targetFormat} using ${provider === null ? 'mock' : (provider || 'default')}.`),
           createDataPart({ 
             transformationType: targetFormat,
             recordCount: Array.isArray(inputData) ? inputData.length : 1,
             outputSize: transformedData.length,
-            provider: provider || llmService.defaultProvider
+            provider: provider === null ? 'mock' : (provider || 'default')
           })
         ];
         
@@ -232,7 +265,7 @@ const skills = {
           createArtifact(
             outputFileName,
             [createDataPart(transformedData, { mimeType: outputMimeType })],
-            `Data transformed to ${targetFormat} format using ${provider || llmService.defaultProvider}`
+            `Data transformed to ${targetFormat} format using ${provider === null ? 'mock' : (provider || 'default')}`
           )
         ];
         
@@ -279,7 +312,7 @@ const skills = {
       
       try {
         // Pass undefined instead of null to use default provider
-        const result = await llmService.generateText(prompt, provider || undefined);
+        const result = await llmService.generateText(prompt, provider === null ? undefined : provider);
         const stepsText = result.text.replace(/```json\n?|\n?```/g, '').trim();
         const steps = JSON.parse(stepsText).map((step, index) => ({
           ...step,
@@ -389,7 +422,7 @@ const skills = {
       
       try {
         // Pass undefined instead of null to use default provider
-        const result = await llmService.generateText(reportPrompt, provider || undefined);
+        const result = await llmService.generateText(reportPrompt, provider === null ? undefined : provider);
         
         const report = {
           plan,

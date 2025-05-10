@@ -56,13 +56,13 @@ class LLMService {
     return Object.keys(this.providers);
   }
   
-  async analyzeText(text, provider = this.defaultProvider) {
+  async analyzeText(text, provider) {
     if (this.mockMode) {
       return this.mockAnalyzeText(text);
     }
     
     // If provider is null or undefined, use the default
-    const actualProvider = provider || this.defaultProvider;
+    const actualProvider = (provider === null || provider === undefined) ? this.defaultProvider : provider;
     
     if (!this.providers[actualProvider]) {
       throw new Error(`Provider ${actualProvider} is not available. Available providers: ${this.getAvailableProviders().join(', ')}`);
@@ -228,17 +228,20 @@ Return your response in JSON format with these fields:
     };
   }
   
-  async generateText(prompt, provider = this.defaultProvider, options = {}) {
+  async generateText(prompt, provider, options = {}) {
     if (this.mockMode) {
       return this.mockGenerateText(prompt);
     }
     
-    if (!this.providers[provider]) {
-      throw new Error(`Provider ${provider} is not available. Available providers: ${this.getAvailableProviders().join(', ')}`);
+    // If provider is null or undefined, use the default
+    const actualProvider = (provider === null || provider === undefined) ? this.defaultProvider : provider;
+    
+    if (!this.providers[actualProvider]) {
+      throw new Error(`Provider ${actualProvider} is not available. Available providers: ${this.getAvailableProviders().join(', ')}`);
     }
     
     try {
-      switch (provider) {
+      switch (actualProvider) {
         case 'openai':
           return await this.generateWithOpenAI(prompt, options);
         case 'anthropic':
@@ -246,10 +249,10 @@ Return your response in JSON format with these fields:
         case 'azure':
           return await this.generateWithAzure(prompt, options);
         default:
-          throw new Error(`Unknown provider: ${provider}`);
+          throw new Error(`Unknown provider: ${actualProvider}`);
       }
     } catch (error) {
-      console.error(`Error with ${provider}:`, error.message);
+      console.error(`Error with ${actualProvider}:`, error.message);
       throw error;
     }
   }
@@ -276,7 +279,7 @@ Return your response in JSON format with these fields:
     };
   }
   
-  async transformData(data, targetFormat, provider = this.defaultProvider) {
+  async transformData(data, targetFormat, provider) {
     if (this.mockMode) {
       return this.mockTransformData(data, targetFormat);
     }
@@ -287,7 +290,9 @@ ${JSON.stringify(data, null, 2)}
 
 Return only the transformed data in ${targetFormat} format.`;
     
-    const result = await this.generateText(prompt, provider);
+    // If provider is null or undefined, use the default
+    const actualProvider = (provider === null || provider === undefined) ? this.defaultProvider : provider;
+    const result = await this.generateText(prompt, actualProvider);
     return result.text;
   }
   
@@ -392,49 +397,8 @@ Return only the transformed data in ${targetFormat} format.`;
       usage: result.usage
     };
   }
-  async transformData(data, targetFormat, provider = this.defaultProvider) {
-    if (this.mockMode) {
-      return this.mockTransformData(data, targetFormat);
-    }
-    
-    const prompt = `Transform the following data to ${targetFormat} format:
-
-${JSON.stringify(data, null, 2)}
-
-Return only the transformed data in ${targetFormat} format.`;
-    
-    const result = await this.generateText(prompt, provider);
-    return result.text;
-  }
   
-  mockTransformData(data, targetFormat) {
-    // Simple mock data transformation
-    switch (targetFormat.toUpperCase()) {
-      case 'CSV':
-        if (Array.isArray(data)) {
-          const headers = Object.keys(data[0]);
-          const csvRows = [headers.join(',')];
-          data.forEach(row => {
-            const values = headers.map(header => row[header]);
-            csvRows.push(values.join(','));
-          });
-          return csvRows.join('\n');
-        }
-        return 'Mock CSV transformation';
-      
-      case 'XML':
-        return `<?xml version="1.0" encoding="UTF-8"?>
-<root>
-  <data>Mock XML transformation</data>
-</root>`;
-      
-      case 'JSON':
-      default:
-        return JSON.stringify(data, null, 2);
-    }
-  }
-  
-  async processImage(imageData, prompt, provider = this.defaultProvider) {
+  async processImage(imageData, prompt, provider) {
     if (this.mockMode) {
       return {
         text: 'Mock image analysis: This image appears to contain various objects and elements. Mock description provided since no real LLM provider is enabled.',
@@ -443,10 +407,16 @@ Return only the transformed data in ${targetFormat} format.`;
       };
     }
     
+    // If provider is null or undefined, use 'openai' as default for image processing
+    const actualProvider = (provider === null || provider === undefined) ? 'openai' : provider;
+    
     // Note: Image processing capabilities vary by provider
-    if (provider === 'openai') {
+    if (actualProvider === 'openai') {
+      // Use the new vision model (gpt-4o or gpt-4o-mini)
+      const model = process.env.OPENAI_VISION_MODEL || 'gpt-4o';
+      
       const completion = await this.providers.openai.chat.completions.create({
-        model: "gpt-4-vision-preview",
+        model: model,
         messages: [{
           role: "user",
           content: [
@@ -465,10 +435,10 @@ Return only the transformed data in ${targetFormat} format.`;
       return {
         text: completion.choices[0].message.content,
         provider: 'openai',
-        model: 'gpt-4-vision-preview'
+        model: model
       };
     } else {
-      throw new Error(`Image processing not implemented for provider: ${provider}`);
+      throw new Error(`Image processing not implemented for provider: ${actualProvider}`);
     }
   }
 }
