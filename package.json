@@ -1,0 +1,38 @@
+{
+  "name": "a2a-playground",
+  "version": "1.0.0",
+  "description": "Demo implementation of the Agent2Agent (A2A) Protocol",
+  "main": "index.js",
+  "scripts": {
+    "server": "PORT=3100 node server/server.js",
+    "client": "node client/client.js",
+    "client-stream": "node client/client-stream.js",
+    "client-push": "node client/client-push.js",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "test": "node tests/test-all.js"
+  },
+  "keywords": [
+    "a2a",
+    "agent2agent",
+    "protocol",
+    "agents",
+    "communication"
+  ],
+  "author": "Leon",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "uuid": "^9.0.1",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2",
+    "axios": "^1.7.0",
+    "eventsource": "^2.0.2",
+    "openai": "^4.20.1",
+    "@anthropic-ai/sdk": "^0.9.1",
+    "@azure/openai": "^1.0.0-beta.8",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "name": "AI-Powered A2A Agent",
+  "description": "A demonstration A2A agent powered by multiple LLM providers (OpenAI, Anthropic, Azure) that supports text analysis, image processing, data transformation, and complex task orchestration. The agent can intelligently route tasks to different LLM providers based on requirements.",
+  "url": "http://localhost:3100/a2a/v1",
+  "provider": {
+    "organization": "A2A Playground with LLM Integration",
+    "url": "https://github.com/example/a2a-playground"
+  },
+  "version": "1.1.0",
+  "documentationUrl": "http://localhost:3100/docs",
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": true,
+    "stateTransitionHistory": false
+  },
+  "authentication": {
+    "schemes": ["Bearer", "ApiKey"],
+    "credentials": "{\"bearerInfo\": \"Obtain token from http://localhost:3100/auth\", \"apiKeyHeader\": \"X-A2A-API-Key\"}"
+  },
+  "defaultInputModes": ["text/plain", "application/json", "image/png", "image/jpeg"],
+  "defaultOutputModes": ["text/plain", "application/json", "image/png"],
+  "metadata": {
+    "llmProviders": ["openai", "anthropic", "azure"],
+    "defaultLLMProvider": "openai",
+    "capabilities": {
+      "textAnalysis": true,
+      "imageProcessing": true,
+      "dataTransformation": true,
+      "taskOrchestration": true,
+      "multiProviderSupport": true
+    }
+  },
+  "skills": [
+    {
+      "id": "text-analysis",
+      "name": "Text Analysis & Processing",
+      "description": "Analyzes text content for sentiment, language, key phrases, and other linguistic features using advanced LLMs. Can summarize, translate, and extract structured information from unstructured text. Supports multiple LLM providers (OpenAI, Anthropic, Azure) for optimal results.",
+      "tags": ["text", "analysis", "nlp", "sentiment", "summarization", "llm", "ai"],
+      "examples": [
+        "Analyze the sentiment of this text using Claude",
+        "Summarize this article with OpenAI GPT-4",
+        "Extract all email addresses from this text using Azure OpenAI",
+        "{\"text\": \"Your text here\", \"provider\": \"anthropic\"}"
+      ],
+      "inputModes": ["text/plain", "application/json"],
+      "outputModes": ["text/plain", "application/json"],
+      "metadata": {
+        "llmRequired": true,
+        "supportedProviders": ["openai", "anthropic", "azure"]
+      }
+    },
+    {
+      "id": "image-processing",
+      "name": "Image Processing & Analysis",
+      "description": "Processes and analyzes images using vision-enabled LLMs. Supports object detection, text extraction (OCR), detailed image description, and custom image analysis tasks. Currently optimized for OpenAI's GPT-4 Vision model.",
+      "tags": ["image", "vision", "ocr", "detection", "processing", "ai", "multimodal"],
+      "examples": [
+        "Extract text from this screenshot using GPT-4 Vision",
+        "Describe everything you see in this photo",
+        "Detect and count objects in this image",
+        "{\"imageUrl\": \"...\", \"provider\": \"openai\", \"task\": \"analyze\"}"
+      ],
+      "inputModes": ["image/png", "image/jpeg", "application/json"],
+      "outputModes": ["text/plain", "application/json"],
+      "metadata": {
+        "llmRequired": true,
+        "supportedProviders": ["openai"],
+        "requiresVisionModel": true
+      }
+    },
+    {
+      "id": "data-transformation",
+      "name": "Data Transformation & Formatting",
+      "description": "Transforms data between different formats (JSON, CSV, XML) using AI-powered conversion. Performs intelligent data manipulation, cleaning, and restructuring. LLMs ensure semantic accuracy during transformation.",
+      "tags": ["data", "transformation", "json", "csv", "xml", "conversion", "ai"],
+      "examples": [
+        "Convert this CSV data to JSON format using Anthropic",
+        "Transform this data structure with OpenAI",
+        "Parse and reformat this unstructured data",
+        "{\"data\": {...}, \"targetFormat\": \"csv\", \"provider\": \"azure\"}"
+      ],
+      "inputModes": ["application/json", "text/csv", "text/plain"],
+      "outputModes": ["application/json", "text/csv", "application/xml", "text/plain"],
+      "metadata": {
+        "llmRequired": true,
+        "supportedProviders": ["openai", "anthropic", "azure"]
+      }
+    },
+    {
+      "id": "task-orchestration",
+      "name": "Complex Task Orchestration",
+      "description": "Manages and orchestrates complex, multi-step tasks using AI planning capabilities. Creates dynamic workflows, handles human-in-the-loop scenarios, and coordinates between different providers for optimal results. LLMs generate and optimize execution plans.",
+      "tags": ["workflow", "orchestration", "automation", "planning", "ai", "multi-step"],
+      "examples": [
+        "Create a data pipeline orchestration using multiple AI models",
+        "Generate and execute a comprehensive analytics workflow",
+        "Plan a multi-step content creation process",
+        "{\"task\": \"batch processing\", \"provider\": \"openai\", \"complexity\": \"high\"}"
+      ],
+      "inputModes": ["application/json", "text/plain"],
+      "outputModes": ["application/json", "text/plain"],
+      "metadata": {
+        "llmRequired": true,
+        "supportedProviders": ["openai", "anthropic", "azure"],
+        "canGeneratePlans": true
+      }
+    }
+  ]
+}
